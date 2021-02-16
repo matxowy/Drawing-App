@@ -6,6 +6,8 @@ import android.util.AttributeSet
 import android.util.TypedValue
 import android.view.MotionEvent
 import android.view.View
+import androidx.core.content.ContextCompat
+import kotlinx.android.synthetic.main.activity_main.view.*
 
 class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) {
 
@@ -18,6 +20,9 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
     private var canvas: Canvas ?= null //tło po którym będziemy rysować
     private val mPaths = ArrayList<CustomPath>() //zmienna w której będziemy przechowywać to co narysowaliśmy
     private val mUndoPaths = ArrayList<CustomPath>() //zmienna do przechowywania ścieżek z mPaths by móc cofać
+    private val mForwardPaths = ArrayList<CustomPath>() //zmienna do przechowywania ścieżek z mPaths by móc cofać cofnięcie
+    private var howMuchUndo: Int = 0
+    //private var erase: Boolean = false //zmienna by wiedzieć czy jest ustawiona gumka czy nie
 
     init {
         setUpDrawing()
@@ -26,8 +31,75 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
      fun onClickUndo(){
         if(mPaths.size > 0) { //jeżeli mamy co usuwać
             mUndoPaths.add(mPaths.removeAt(mPaths.size - 1)) //do listy dodajemy mPaths bez tej ostatniej ścieżki którą chcemy usunąć
+            if(mForwardPaths.size > howMuchUndo) { //zabezpieczenie by nie wypadać poza listę przy rysowaniu nowych ścieżek po cofnięciu
+                howMuchUndo++ //licznik cofnięć
+            }
             invalidate() //wywołuje od nowa onDraw i rysuje na nowo ścieżki bez tej ostatnio usuniętej
         }
+    }
+
+    fun onClickForward(){
+            if(mPaths.size > 0) { //jeżeli są jakieś ścieżki
+                if(mForwardPaths[mForwardPaths.size - 1] != mPaths[mPaths.size - 1]){ //jeżeli ścieżka do przywrócenia nie jest jeszcze w mPahts czyli narysowana to
+
+                    when (howMuchUndo) { //w zależności ile cofnięć jest wtedy
+                        1 -> {
+                            mPaths.add(mForwardPaths[mForwardPaths.size - 1]) //dodajemy do mPaths tą ścieżkę którą chcemy przywrócić
+                            invalidate() //rysujemy od nowa ścieżki
+                            howMuchUndo-- //zmniejszamy liczbę cofnięć
+                        }
+                        2 -> {
+                            mPaths.add(mForwardPaths[mForwardPaths.size - 2])
+                            invalidate()
+                            howMuchUndo--
+                        }
+                        3 -> {
+                            mPaths.add(mForwardPaths[mForwardPaths.size - 3])
+                            invalidate()
+                            howMuchUndo--
+                        }
+                        4 -> {
+                            mPaths.add(mForwardPaths[mForwardPaths.size - 4])
+                            invalidate()
+                            howMuchUndo--
+                        }
+                        5 -> {
+                            mPaths.add(mForwardPaths[mForwardPaths.size - 5])
+                            invalidate()
+                            howMuchUndo--
+                        }
+                    }
+
+            }
+        } else if(mPaths.size == 0){ //if potrzebny by móc przywracać ścieżki gdy cofniemy wszystkie ścieżki dotychczasowe 
+                when (howMuchUndo) {
+                    1 -> {
+                        mPaths.add(mForwardPaths[mForwardPaths.size - 1])
+                        invalidate()
+                        howMuchUndo--
+                    }
+                    2 -> {
+                        mPaths.add(mForwardPaths[mForwardPaths.size - 2])
+                        invalidate()
+                        howMuchUndo--
+                    }
+                    3 -> {
+                        mPaths.add(mForwardPaths[mForwardPaths.size - 3])
+                        invalidate()
+                        howMuchUndo--
+                    }
+                    4 -> {
+                        mPaths.add(mForwardPaths[mForwardPaths.size - 4])
+                        invalidate()
+                        howMuchUndo--
+                    }
+                    5 -> {
+                        mPaths.add(mForwardPaths[mForwardPaths.size - 5])
+                        invalidate()
+                        howMuchUndo--
+                    }
+                }
+            }
     }
 
     private fun setUpDrawing() {
@@ -82,14 +154,43 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
                 }
             }
             MotionEvent.ACTION_MOVE -> { //gdy przesuwamy
+                /*if(erase){
+                    if (touchX != null) {
+                        if (touchY != null) {
+                            mDrawPath!!.lineTo(touchX, touchY)
+                        }
+                    }
+                    mPaths.add(mDrawPath!!)
+                    mDrawPath!!.reset()
+                    if (touchX != null) {
+                        if (touchY != null) {
+                            mDrawPath!!.moveTo(touchX,touchY)
+                        }
+                    }
+                }else {
+                    if (touchY != null) {
+                        if (touchX != null) {
+                            mDrawPath!!.lineTo(touchX, touchY) //dodaje linie do zadeklarowanego x i y
+                        }
+                    }
+                }*/
+
                 if (touchY != null) {
                     if (touchX != null) {
-                        mDrawPath!!.lineTo(touchX,touchY) //dodaje linie do zadeklarowanego x i y
+                        mDrawPath!!.lineTo(touchX, touchY) //dodaje linie do zadeklarowanego x i y
                     }
                 }
+
             }
             MotionEvent.ACTION_UP ->{ //gdy podniesiemy palec
                 mPaths.add(mDrawPath!!) //dodajemy to co narysowaliśmy do arraylisty zdefiniowanej by zapisać na ekranie to co narysowaliśmy
+                if(howMuchUndo > 0){
+                    mForwardPaths.clear()
+                    mForwardPaths.addAll(mPaths)
+                    howMuchUndo = 1 //jeżeli przed narysowaniem było cofane to trzeba przypisać 1 licznikowi, dodać wszystkie ścieżki z mPaths żeby można było je przywracać i wyczyścić listę poprzednich ścieżek żeby starych ścieżek nie przywracać
+                }
+                mForwardPaths.add(mDrawPath!!) //dodajemy to co narysowaliśmy byśmy po cofnieciu mogli wrócić do tego
+
                 mDrawPath = CustomPath(color, mBrushSize)
             }
             else -> return false //jeżeli jakiś inny event to zwracamy false
@@ -108,6 +209,29 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
         color = Color.parseColor(newColor) //przypisujemy do zmiennej globalnej nowy kolor podany w argumencie funckji
         mDrawPaint!!.color = color //ustawiamy color do rysowania na color ustawiony z argumentu funkcji
     }
+
+
+    /*fun startEraser(){
+        mDrawPaint!!.alpha = 0
+        color = Color.TRANSPARENT
+        mDrawPaint!!.color = Color.TRANSPARENT
+        mDrawPaint!!.style = Paint.Style.STROKE //ustawienie stylu jako linii
+        mDrawPaint!!.strokeJoin = Paint.Join.ROUND //ustawienie linii żeby była zaokrąglona
+        mDrawPaint!!.strokeCap = Paint.Cap.ROUND //ustawienie linii żeby była zaokrąglona
+        mDrawPaint!!.maskFilter = null
+        mDrawPaint!!.xfermode = PorterDuffXfermode(PorterDuff.Mode.CLEAR)
+        mDrawPaint!!.isAntiAlias = true
+    }
+
+    fun setErase(isErase: Boolean){
+        erase = isErase
+
+        if(erase){
+            mDrawPaint!!.setXfermode(PorterDuffXfermode(PorterDuff.Mode.CLEAR)) //ustawiamy mDrawPaint na tryb gumki
+        }else{
+            mDrawPaint!!.setXfermode(null)
+        }
+    }*/
 
     internal inner class CustomPath(var color: Int, var brushThickness: Float) : Path() {
 

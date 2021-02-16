@@ -2,7 +2,9 @@ package com.example.drawingappp
 
 import android.Manifest
 import android.app.Activity
+import android.app.AlertDialog
 import android.app.Dialog
+import android.content.DialogInterface
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
@@ -68,6 +70,38 @@ class MainActivity : AppCompatActivity() {
                 requestStoragePermission()
             }
         }
+
+        ib_new.setOnClickListener {
+            newProjectDialog()
+        }
+
+        ib_forward.setOnClickListener {
+            drawing_view.onClickForward()
+        }
+
+        /*ib_erase.setOnClickListener {
+            showEraserSizeChooserDialog()
+            drawing_view.startEraser()
+        }*/
+    }
+
+    private fun newProjectDialog(){
+        val newProject = AlertDialog.Builder(this)
+        newProject.setTitle("Nowy projekt")
+        newProject.setMessage("Stworzyć nowy projekt?(stracisz swój dotychczasowy projekt)")
+        newProject.setPositiveButton("Tak") { dialogInterface, which ->
+            finish() //kończymy activity
+            overridePendingTransition(0,0) //funkcja by nasze włączanie od nowa activity było bardziej płynne
+            startActivity(Intent(this, MainActivity::class.java)) //odpalamy znowu ten sam intent by zresetować wszystko i dać użytkownikowi robić nowy projekt
+            overridePendingTransition(0,0)
+            dialogInterface.dismiss()
+        }
+        newProject.setNegativeButton("Anuluj") { dialogInterface, which ->
+            dialogInterface.dismiss()
+        }
+
+        val newProjectDialog: AlertDialog = newProject.create()
+        newProjectDialog.show()
     }
 
     private fun showBrushSizeChooserDialog(){ //funkcja do pokazania dialogu z wyborem rozmiaru pędzla
@@ -77,25 +111,57 @@ class MainActivity : AppCompatActivity() {
 
         val smallBtn = brushDialog.ib_small_brush
         smallBtn.setOnClickListener {
+            //drawing_view.setErase(false) //usuwamy tryb gumki
             drawing_view.setSizeForBrush(10.toFloat()) //ustawia rozmiar pędzla na 10
             brushDialog.dismiss() // znika widok wyboru rozmiaru pędzla
         }
 
         val mediumBtn = brushDialog.ib_medium_brush
         mediumBtn.setOnClickListener {
+            //drawing_view.setErase(false) //usuwamy tryb gumki
             drawing_view.setSizeForBrush(20.toFloat()) //ustawia rozmiar pędzla na 20
             brushDialog.dismiss() // znika widok wyboru rozmiaru pędzla
         }
 
         val largeBtn = brushDialog.ib_large_brush
         largeBtn.setOnClickListener {
+            //drawing_view.setErase(false) //usuwamy tryb gumki
             drawing_view.setSizeForBrush(30.toFloat()) //ustawia rozmiar pędzla na 30
             brushDialog.dismiss() // znika widok wyboru rozmiaru pędzla
         }
         brushDialog.show() //żeby pokazywalo brushDialog
     }
 
+    /*private fun showEraserSizeChooserDialog(){ //funkcja do pokazania dialogu z wyborem rozmiaru gumki
+        val brushDialog = Dialog(this)
+        brushDialog.setContentView(R.layout.dialog_brush_size) //ustawiamy wygląd dialogu na przygotowany w xml
+        brushDialog.setTitle("Rozmiar gumki: ") //tytuł dialogu
+
+        val smallBtn = brushDialog.ib_small_brush
+        smallBtn.setOnClickListener {
+            drawing_view.setErase(true) //ustawiamy tryb gumki
+            drawing_view.setSizeForBrush(10.toFloat()) //ustawia rozmiar pędzla na 10
+            brushDialog.dismiss() // znika widok wyboru rozmiaru pędzla
+        }
+
+        val mediumBtn = brushDialog.ib_medium_brush
+        mediumBtn.setOnClickListener {
+            drawing_view.setErase(true) //ustawiamy tryb gumki
+            drawing_view.setSizeForBrush(20.toFloat()) //ustawia rozmiar pędzla na 20
+            brushDialog.dismiss() // znika widok wyboru rozmiaru pędzla
+        }
+
+        val largeBtn = brushDialog.ib_large_brush
+        largeBtn.setOnClickListener {
+            drawing_view.setErase(true) //ustawiamy tryb gumki
+            drawing_view.setSizeForBrush(30.toFloat()) //ustawia rozmiar pędzla na 30
+            brushDialog.dismiss() // znika widok wyboru rozmiaru pędzla
+        }
+        brushDialog.show() //żeby pokazywalo brushDialog
+    }*/
+
     fun paintClicked(view: View){
+        //drawing_view.setErase(false) //usuwamy tryb gumki
         if(view != mImageButtonCurrentPaint){ //jeżeli kliknięty imagebutton nie jest wybranym już wcześniej buttonem to wtedy:
             val imageButton = view as ImageButton //przypisujemy do zmiennej ten aktualnie kliknięty imagebutton
             val colorTag = imageButton.tag.toString() //zapisujemy pod zmienną colorTag kolor aktualnie klikniętego buttonu z właściwości tag jako string(bo to kolor)
