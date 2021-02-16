@@ -7,3 +7,7 @@ In the app you can:
 - Change size of brush
 - You can undo that what you drew
 - You can save the image and share it
+
+In new version I add:
+- Forward button to restore what you drew
+- New project button to create new project 
